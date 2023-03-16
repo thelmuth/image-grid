@@ -1,7 +1,8 @@
 (ns image-grid.core
   (:require [clojure.math :as math]
             [mikera.image.core :as mk]
-            [mikera.image.colours :as mkcolors]))
+            [mikera.image.colours :as mkcolors]
+            [image-grid.color :as color]))
 
 ;; Images represented as 2D vectors of 3-tuples of floats between 0.0 and 1.0.
 ;; Creating functions to manipulate those in an immutable fashion, and then
@@ -58,7 +59,7 @@
   (let [width (.getWidth mkimage)
         height (.getHeight mkimage)
         initial-grid (new-image-grid width height)]
-    (map-image-grid (fn [[x y] rgb]
+    (map-image-grid (fn [[x y] _]
                       (mapv #(/ % 255.0)
                             (mkcolors/components-rgb
                              (mk/get-pixel mkimage x y))))
@@ -75,29 +76,42 @@
       (mk/set-pixel mk-image x y (apply mkcolors/rgb (get-pixel image-grid [x y]))))
     mk-image))
 
+;; Examples using the image-grid/pixel functions.
+(comment
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Color conversions
+  ;; Create a new image with a reddish pixel and a short green line.
+  (let [img (-> (new-image-grid 50 30)
+                (set-pixel [10 5] [0.8 0.0 1.0])
+                (set-pixel [25 20] [0.0 0.9 0.1])
+                (set-pixel [26 20] [0.0 0.9 0.1])
+                (set-pixel [27 20] [0.0 0.9 0.1])
+                (set-pixel [28 20] [0.0 0.9 0.1])
+                (set-pixel [29 20] [0.0 0.9 0.1])
+                (image-grid->mkimage))]
+    (mk/save img "images/test.png") ;; save image as test.png 
+    (mk/show img))           ;; show the image
+
+  ;; Make an image filled with a gradient using map-image-grid
+  (mk/show
+   (let [width 500
+         height 300
+         empty-image (new-image-grid width height)
+         pixel-fn (fn [[x y] _]
+                    [(/ y height) (/ x width) 0.3])
+         img-grid (map-image-grid pixel-fn empty-image)]
+     (image-grid->mkimage img-grid)))
+
+  ;; Load an image and make it redder
+  (mk/show
+   (image-grid->mkimage
+    (map-image-grid
+     (fn [_ [r g b]]
+       [(+ r 0.2) g b])
+     (mkimage->image-grid (mk/load-image "images/dog.jpg")))))
+
+  )
 
 
-(defn hsv->rgb
-  "Given a color in the HSV color system, convert to the equivalent RGB.
-   h, s, and v are all assumed to be in [0, 1].
-   Return: [r, g, b], with all in [0, 1].
-   Uses this formula: https://en.wikipedia.org/wiki/HSL_and_HSV#HSV_to_RGB"
-  [[h s v]]
-  (let [chroma (* v s)
-        h-prime (* h 6.0)
-        x (* chroma (- 1 (abs (- (mod h-prime 2) 1))))
-        rgb1 (cond
-               (< h-prime 1) [chroma x 0]
-               (< h-prime 2) [x chroma 0]
-               (< h-prime 3) [0 chroma x]
-               (< h-prime 4) [0 x chroma]
-               (< h-prime 5) [x 0 chroma]
-               :else         [chroma 0 x])
-        m (- v chroma)]
-    (mapv #(+ % m) rgb1)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;;;; Making an image from functions
@@ -116,8 +130,8 @@
    Still working out some kinks, just added HSV, and need to change the
    / 100 once the image coordinates are different."
   [r-fn g-fn b-fn]
-  (fn [[x y] rgb]
-    (hsv->rgb (mapv #(logistic (/ (% x y) 100.0))
+  (fn [[x y] _]
+    (color/hsv->rgb (mapv #(logistic (/ (% x y) 100.0))
                     [r-fn g-fn b-fn]))))
 
 (defn rgb-fns-to-image
@@ -141,48 +155,9 @@
   (* (- x 100) (- y 50)))
 
 (defn ex-b-fn
-  [x y]
+  [x _]
   (- (mod (* x 1.5) 400) 200))
 
 (comment
-  
-  (mk/show (rgb-fns-to-image 400 400 ex-b-fn ex-g-fn ex-r-fn))
-  
-)
 
-;; Examples just using the image/pixel functions.
-(comment
-
-  ;; Create a new image with a reddish pixel and a short green line.
-  (let [img (-> (new-image-grid 50 30)
-                (set-pixel [10 5] [0.8 0.0 1.0])
-                (set-pixel [25 20] [0.0 0.9 0.1])
-                (set-pixel [26 20] [0.0 0.9 0.1])
-                (set-pixel [27 20] [0.0 0.9 0.1])
-                (set-pixel [28 20] [0.0 0.9 0.1])
-                (set-pixel [29 20] [0.0 0.9 0.1])
-                (image-grid->mkimage))]
-    (mk/save img "images/test.png") ;; save image as test.png 
-    (mk/show img))           ;; show the image
-
-  ;; Make an image filled with a gradient using map-image-grid
-  (mk/show
-   (let [width 500
-         height 300
-         empty-image (new-image-grid width height)
-         pixel-fn (fn [[x y] rgb]
-                    [(/ y height) (/ x width) 0.3])
-         img-grid (map-image-grid pixel-fn empty-image)]
-     (image-grid->mkimage img-grid)))
-
-  ;; Load an image and make it redder
-  (mk/show
-   (image-grid->mkimage
-    (map-image-grid
-     (fn [xy [r g b]]
-       [(+ r 0.2) g b])
-     (mkimage->image-grid (mk/load-image "images/dog.jpg")))))
-
-
-  )
-
+  (mk/show (rgb-fns-to-image 400 400 ex-b-fn ex-g-fn ex-r-fn)))
