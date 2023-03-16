@@ -1,8 +1,6 @@
 (ns image-grid.core
-  (:require [clojure.math :as math]
-            [mikera.image.core :as mk]
-            [mikera.image.colours :as mkcolors]
-            [image-grid.color :as color]))
+  (:require [mikera.image.core :as mk]
+            [mikera.image.colours :as mkcolors]))
 
 ;; An image-grid is a 2D vector of 3-tuple RGB components, which are all
 ;; floats between 0.0 and 1.0.
@@ -65,38 +63,3 @@
             y (range rows)]
       (mk/set-pixel mk-image x y (apply mkcolors/rgb (get-pixel image-grid [x y]))))
     mk-image))
-
-;; Examples using the image-grid/pixel functions.
-(comment
-
-  ;; Create a new image with a reddish pixel and a short green line.
-  (let [img (-> (new-image-grid 50 30)
-                (set-pixel [10 5] [0.8 0.0 1.0])
-                (set-pixel [25 20] [0.0 0.9 0.1])
-                (set-pixel [26 20] [0.0 0.9 0.1])
-                (set-pixel [27 20] [0.0 0.9 0.1])
-                (set-pixel [28 20] [0.0 0.9 0.1])
-                (set-pixel [29 20] [0.0 0.9 0.1])
-                (image-grid->mkimage))]
-    (mk/save img "images/test.png") ;; save image as test.png 
-    (mk/show img))           ;; show the image
-
-  ;; Make an image filled with a gradient using map-image-grid
-  (mk/show
-   (let [width 500
-         height 300
-         empty-image (new-image-grid width height)
-         pixel-fn (fn [[x y] _]
-                    [(/ y height) (/ x width) 0.3])
-         img-grid (map-image-grid pixel-fn empty-image)]
-     (image-grid->mkimage img-grid)))
-
-  ;; Load an image and make it redder
-  (mk/show
-   (image-grid->mkimage
-    (map-image-grid
-     (fn [_ [r g b]]
-       [(+ r 0.2) g b])
-     (mkimage->image-grid (mk/load-image "images/dog.jpg")))))
-
-  )

@@ -46,7 +46,7 @@
     [h s v]))
 
 
-; examples:
+;; Examples:
 (comment
 
   (hsv->rgb [0.55 0.8 0.7])
