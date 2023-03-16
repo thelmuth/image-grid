@@ -4,18 +4,8 @@
             [mikera.image.colours :as mkcolors]
             [image-grid.color :as color]))
 
-;; Images represented as 2D vectors of 3-tuples of floats between 0.0 and 1.0.
-;; Creating functions to manipulate those in an immutable fashion, and then
-;; only converting to an image at the end.
-
-;; TODO Image library:
-;; - rgb-to-hsv
-
-;; TODO for GP:
-;; - move center to middle of image
-;; - make coordinates so that 1/2 longer dimension = 1. Will need to remove / 100 from rgb-fns-pixel
-;; - add polar coordinates to color function inputs
-;; - GP???
+;; An image-grid is a 2D vector of 3-tuple RGB components, which are all
+;; floats between 0.0 and 1.0.
 
 (defn new-image-grid
   "Creates a new 2D vector of given width and height,
@@ -110,54 +100,3 @@
      (mkimage->image-grid (mk/load-image "images/dog.jpg")))))
 
   )
-
-
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;;;; Making an image from functions
-
-(defn logistic
-  "Logistic/sigmoid function."
-  [z]
-  (try (/ 1.0
-          (inc (math/exp (- z))))
-       (catch Exception _ 0.0)))
-
-(defn rgb-fns->pixel-fn
-  "Given three functions that transform x-y pairs to r, g, and b respectively,
-   creates a pixel-fn as required by map-image-grid.
-   
-   Still working out some kinks, just added HSV, and need to change the
-   / 100 once the image coordinates are different."
-  [r-fn g-fn b-fn]
-  (fn [[x y] _]
-    (color/hsv->rgb (mapv #(logistic (/ (% x y) 100.0))
-                    [r-fn g-fn b-fn]))))
-
-(defn rgb-fns-to-image
-  "Given width and height of an image, as well as function specifying how to
-   transform each pixel's coordinates into r, g, and b values, creates
-   a new image with those pixels."
-  [width height r-fn g-fn b-fn]
-  (let [new-image (new-image-grid width height)]
-    (image-grid->mkimage
-     (map-image-grid (rgb-fns->pixel-fn r-fn g-fn b-fn)
-                     new-image))))
-
-
-(defn ex-r-fn
-  [x y]
-  (- x y)
-  #_(* 400 (+ -200 (+ (* 0.5 x) y))))
-
-(defn ex-g-fn
-  [x y]
-  (* (- x 100) (- y 50)))
-
-(defn ex-b-fn
-  [x _]
-  (- (mod (* x 1.5) 400) 200))
-
-(comment
-
-  (mk/show (rgb-fns-to-image 400 400 ex-b-fn ex-g-fn ex-r-fn)))
