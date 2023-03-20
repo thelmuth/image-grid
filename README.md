@@ -37,6 +37,6 @@ And now you can use and manipulate image grids:
 
 Which will generate and show this image:
 
-![Gradient](https://github.com/thelmuth/image-grid/blob/main/images/ig-gradient.jpg)
+![Gradient](https://github.com/thelmuth/image-grid/blob/main/images/ig-gradient.png)
 
 See `src/image_grid/demo.clj` for more examples.
