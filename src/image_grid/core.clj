@@ -12,6 +12,16 @@
   (vec (repeat height
                (vec (repeat width [0.0 0.0 0.0])))))
 
+(defn width
+  "Returns the width of the image-grid in pixels"
+  [image-grid]
+  (count (first image-grid)))
+
+(defn height
+  "Returns the height of the image-grid in pixels"
+  [image-grid]
+  (count image-grid))
+
 (defn get-pixel
   "Gets a pixel from a given location in image-grid"
   [image-grid [x y]]

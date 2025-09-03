@@ -50,3 +50,8 @@
            rgb (color/hsv->rgb [new-h s v])]
        rgb))
    (ig/mkimage->image-grid (mk/load-image "images/dog.jpg")))))
+
+;; Get the width or height of an image
+(let [imgrid (ig/mkimage->image-grid (mk/load-image "images/dog.jpg"))]
+  (println "Width:" (ig/width imgrid))
+  (println "Height:" (ig/height imgrid)))
